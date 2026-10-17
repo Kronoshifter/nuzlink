@@ -1,51 +1,42 @@
-# Agent Instructions
+# AGENTS.md
 
-This project uses **bd** (beads) for issue tracking. Run `bd prime` for full workflow context.
+**nuzlink** — a tracker for Nuzlocke and soul link challenge runs. Android app, Kotlin + Jetpack Compose, single `:app` module, package `com.kronos.nuzlink` (minSdk 31, compile/target SDK 37, AGP 9.4.1, Gradle 9.6.0 wrapper).
 
-> **Architecture in one line:** Issues live in a local Dolt database
-> (`.beads/dolt/`); cross-machine sync uses `bd dolt push/pull` (a
-> git-compatible protocol), stored under `refs/dolt/data` on your git
-> remote — separate from `refs/heads/*` where your code lives.
-> `.beads/issues.jsonl` is a passive export, not the wire protocol.
->
-> See [SYNC_CONCEPTS.md](https://github.com/gastownhall/beads/blob/main/docs/SYNC_CONCEPTS.md)
-> for the one-screen overview and anti-patterns (don't treat JSONL as the
-> source of truth; don't `bd import` during normal operation; don't
-> reach for third-party Dolt hosting before trying the default).
+## Commands
 
-## Quick Reference
+| What | Command |
+|---|---|
+| Build debug APK | `./gradlew :app:assembleDebug` |
+| Install on device/emulator | `./gradlew :app:installDebug` |
+| JVM unit tests | `./gradlew :app:testDebugUnitTest` |
+| One test class | `./gradlew :app:testDebugUnitTest --tests "com.kronos.nuzlink.MySpec"` |
+| On-device tests (needs device) | `./gradlew :app:connectedDebugAndroidTest` |
+| Format check / apply | `./gradlew :app:ktfmtCheck` / `./gradlew :app:ktfmtFormat` |
+| Static analysis | `./gradlew :app:detekt` |
 
-```bash
-bd ready              # Find available work
-bd show <id>          # View issue details
-bd update <id> --claim  # Claim work atomically
-bd close <id>         # Complete work
-bd dolt push          # Push beads data to remote
-```
+- No CI in the repo — verify locally, ideally format → detekt → unit tests.
+- `local.properties` (gitignored) holds `sdk.dir`; fresh clones won't build until it points at an Android SDK.
 
-## Non-Interactive Shell Commands
+## Testing quirks
 
-**ALWAYS use non-interactive flags** with file operations to avoid hanging on confirmation prompts.
+- `src/test` runs on the JUnit **Platform** with Kotest 6 (`useJUnitPlatform` in the build): write Kotest specs, not JUnit4. The template `ExampleUnitTest` is JUnit4 and is silently skipped (no vintage engine on the classpath).
+- `src/androidTest` is JUnit4 + `AndroidJUnitRunner` + Compose UI test; runs only on a device/emulator.
+- Detekt analyzes `src/main` only; `test/`, `androidTest/`, and generated code are excluded from the gate.
 
-Shell commands like `cp`, `mv`, and `rm` may be aliased to include `-i` (interactive) mode on some systems, causing the agent to hang indefinitely waiting for y/n input.
+## Stack notes (non-obvious)
 
-**Use these forms instead:**
-```bash
-# Force overwrite without prompting
-cp -f source dest           # NOT: cp source dest
-mv -f source dest           # NOT: mv source dest
-rm -f file                  # NOT: rm file
+- **Room 3** = `androidx.room3` artifacts (not classic `androidx.room`), KSP compiler, `sqlite-async` driver, schema exports to `app/schemas/`.
+- **Navigation 3** (`androidx.navigation3` runtime/ui + Material 3 adaptive), not the older Navigation Compose — no `NavHost`/`NavHostController` imports.
+- **Koin 4** with the compiler plugin; detekt-koin rules are enforced.
+- Pokémon data via `co.pokeapi.pokekotlin` + kotlinx-serialization.
+- Kotlin sources live in `app/src/main/java/`, not `src/main/kotlin/`.
+- Current state: still the Android Studio template — no Koin modules, Room entities, or screens exist yet; `MainActivity` renders only the template screen.
 
-# For recursive operations
-rm -rf directory            # NOT: rm -r directory
-cp -rf source dest          # NOT: cp -r source dest
-```
+## Style & formatting
 
-**Other commands that may prompt:**
-- `scp` - use `-o BatchMode=yes` for non-interactive
-- `ssh` - use `-o BatchMode=yes` to fail instead of prompting
-- `apt-get` - use `-y` flag
-- `brew` - use `HOMEBREW_NO_AUTO_UPDATE=1` env var
+- ktfmt: Google style, 140 max line width, trailing commas — run `:app:ktfmtFormat` before committing.
+- Detekt config: root `detekt.yml` (MaxLineLength 140, fails on Error severity).
+- `TODO:` / `FIXME:` / `STOPSHIP:` comments are forbidden by detekt (ForbiddenComment) — file a bead instead.
 
 <!-- BEGIN BEADS INTEGRATION v:1 profile:minimal hash:970c3bf2 -->
 ## Beads Issue Tracker

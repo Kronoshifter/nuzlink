@@ -13,9 +13,23 @@
 .externalNativeBuild
 .cxx
 local.properties
+.idea
+demos
+.aider*
+
+# CodeGraphRAG
+.tmp/
+.cgr-*
 
 # Beads / Dolt files (added by bd init)
 .dolt/
 *.db
 .beads-credential-key
 .beads/proxieddb/
+.beads/*.jsonl
+
+# My own OpenCode workflow files
+.opencode/speculation.md
+openspec/speculation.md
+.kotlin/
+.cortexkit/
