@@ -1,0 +1,7 @@
+{
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "embedded",
+  "dolt_database": "nuzlink",
+  "project_id": "30210d98-89df-45a2-b507-f12c69f2f4d9"
+}
